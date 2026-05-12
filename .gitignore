@@ -26,6 +26,9 @@ wrangler-debug.log*
 *.swo
 *~
 
+# Claude Code session context — keep local only
+CLAUDE.md
+
 # Environment / secrets — never commit these
 .env
 .env.*
