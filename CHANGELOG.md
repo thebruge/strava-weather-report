@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-05-12
+
+### Changed
+- GitHub Actions workflow updated to Node.js 24
+- Wrangler now runs directly in CI for clearer error output
+- Added GitHub Environments integration for deployment tracking in repo sidebar
+
 ## [1.1.0] - 2026-05-12
 
 ### Fixed
