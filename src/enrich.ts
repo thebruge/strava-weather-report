@@ -17,9 +17,10 @@ export async function handleStravaActivity(
 
   // Strava fires the webhook before GPS processing completes. Retry a few
   // times with backoff to give the activity time to be fully populated.
+  // Delays are kept short to stay within the Workers free tier waitUntil limit.
   let activity = await getActivity(event.object_id, token);
   if (!activity.start_latlng || activity.start_latlng.length !== 2) {
-    const delays = [5000, 15000, 30000];
+    const delays = [3000, 7000];
     for (const delay of delays) {
       await sleep(delay);
       activity = await getActivity(event.object_id, token);
