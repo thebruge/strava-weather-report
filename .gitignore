@@ -1,6 +1,36 @@
+# Dependencies
 node_modules/
+
+# Wrangler
 .wrangler/
 .dev.vars
-*.log
-.DS_Store
+.dev.vars.*
+
+# Build output
 dist/
+
+# Logs
+*.log
+npm-debug.log*
+wrangler-debug.log*
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment / secrets — never commit these
+.env
+.env.*
+!.env.example
+
+# OS
+Thumbs.db
+ehthumbs.db
