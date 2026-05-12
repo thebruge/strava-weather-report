@@ -19,11 +19,12 @@ Workers KV ◀──▶ Worker  (OAuth token storage)
 1. **Strava fires a POST** to `/webhook` when an activity is created.
 2. The Worker immediately returns `200 OK` (Strava requires a response within ~2s).
 3. The enrichment work runs asynchronously via `ctx.waitUntil()` so the response isn't blocked.
-4. The Worker fetches the activity from Strava to get `start_latlng`, `start_date`, and `elapsed_time`.
-5. If the activity has no GPS, or is already enriched (checked via sport-aware marker fragments), processing stops.
-6. Open-Meteo is queried for hourly weather data spanning the activity's start and end dates.
-7. Three snapshots are computed: start, end, and average across the activity window.
-8. A formatted weather block is prepended to the activity description and PUT back to Strava.
+4. The Worker checks `owner_id` against `STRAVA_ATHLETE_ID` and silently drops events from other athletes.
+5. The Worker fetches the activity from Strava to get `start_latlng`, `start_date`, and `elapsed_time`.
+6. If the activity has no GPS, or is already enriched (checked via sport-aware marker fragments), processing stops.
+7. Open-Meteo is queried for hourly weather data spanning the activity's start and end dates.
+8. Three snapshots are computed: start, end, and average across the activity window.
+9. A formatted weather block is prepended to the activity description and PUT back to Strava.
 
 ## Modules
 
@@ -32,7 +33,7 @@ Workers KV ◀──▶ Worker  (OAuth token storage)
 Handles the two HTTP interactions Strava requires:
 
 - **GET /webhook** — Webhook verification handshake. Strava sends `hub.mode`, `hub.verify_token`, and `hub.challenge`; the Worker echoes back the challenge if the verify token matches.
-- **POST /webhook** — Live event delivery. Parses the event and dispatches async enrichment via `ctx.waitUntil()`.
+- **POST /webhook** — Live event delivery. Validates `owner_id` against `STRAVA_ATHLETE_ID`, then parses the event and dispatches async enrichment via `ctx.waitUntil()`.
 
 All other paths return 404.
 
@@ -77,7 +78,7 @@ Before enriching, the Worker checks whether the description already contains any
 |---|---|
 | Worker | `strava-weather-enricher`, deployed to `strava.gallagher.team` |
 | KV Namespace | `TOKENS` — stores one key: `strava` |
-| Secrets | `STRAVA_CLIENT_ID`, `STRAVA_CLIENT_SECRET`, `STRAVA_VERIFY_TOKEN` |
+| Secrets | `STRAVA_CLIENT_ID`, `STRAVA_CLIENT_SECRET`, `STRAVA_VERIFY_TOKEN`, `STRAVA_ATHLETE_ID` |
 | Custom domain | `strava.gallagher.team` — Cloudflare manages DNS + TLS |
 | CI/CD | GitHub Actions → `wrangler deploy` on push to `main` |
 
@@ -91,6 +92,8 @@ Strava backend
   POST /webhook  ──────────────────────────────────────────▶ Worker
                                                                │
                                                     200 OK ◀──┘ (immediate)
+                                                               │
+                                              owner_id check ───▶ drop if not yours
                                                                │
                                                     ctx.waitUntil(enrich())
                                                                │

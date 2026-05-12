@@ -45,7 +45,12 @@ Also update the `routes` entry if you're using a different domain than `strava.g
 npx wrangler secret put STRAVA_CLIENT_ID      # your numeric client ID
 npx wrangler secret put STRAVA_CLIENT_SECRET  # your client secret
 npx wrangler secret put STRAVA_VERIFY_TOKEN   # any random string you choose
+npx wrangler secret put STRAVA_ATHLETE_ID     # your Strava athlete ID
 ```
+
+Your **athlete ID** is the number in the URL when you view your Strava profile: `https://www.strava.com/athletes/YOUR_ID`. It's also returned in the OAuth token exchange response as `athlete.id`.
+
+This is used to reject webhook events from other athletes, protecting your Strava API quota.
 
 Keep note of the verify token — you'll need it again in step 7.
 
@@ -117,10 +122,11 @@ Should return `{"id": 123456}`. You're done.
 
 ## Step 8 — GitHub Actions auto-deploy (optional)
 
-Add two secrets to your GitHub repository (Settings → Secrets and variables → Actions):
+Add three secrets to your GitHub repository (Settings → Secrets and variables → Actions):
 
 - `CLOUDFLARE_API_TOKEN` — create at https://dash.cloudflare.com/profile/api-tokens using the **Edit Cloudflare Workers** template
 - `CLOUDFLARE_ACCOUNT_ID` — visible in the Cloudflare dashboard sidebar
+- `STRAVA_ATHLETE_ID` — same value as the Worker secret above
 
 Pushes to `main` will now auto-deploy the Worker.
 
@@ -144,5 +150,5 @@ Simulate a webhook with a real activity ID:
 ```bash
 curl -X POST https://YOUR_DOMAIN/webhook \
   -H "Content-Type: application/json" \
-  -d '{"aspect_type":"create","event_time":0,"object_id":YOUR_ACTIVITY_ID,"object_type":"activity","owner_id":0,"subscription_id":0}'
+  -d '{"aspect_type":"create","event_time":0,"object_id":YOUR_ACTIVITY_ID,"object_type":"activity","owner_id":YOUR_ATHLETE_ID,"subscription_id":0}'
 ```

@@ -70,7 +70,10 @@ Copy the `id` from the output and replace `REPLACE_WITH_YOUR_KV_NAMESPACE_ID` in
 npx wrangler secret put STRAVA_CLIENT_ID
 npx wrangler secret put STRAVA_CLIENT_SECRET
 npx wrangler secret put STRAVA_VERIFY_TOKEN   # any random string
+npx wrangler secret put STRAVA_ATHLETE_ID     # your numeric Strava athlete ID
 ```
+
+Your athlete ID is the number in your Strava profile URL: `https://www.strava.com/athletes/YOUR_ID`.
 
 ### 4. Deploy
 
