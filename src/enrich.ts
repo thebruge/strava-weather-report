@@ -4,6 +4,8 @@ import { getWeatherForActivity, type WeatherSnapshot } from './weather';
 
 const MARKER = '🌤 Weather conditions';
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 export async function handleStravaActivity(
   event: StravaWebhookEvent,
   env: Env
@@ -12,7 +14,18 @@ export async function handleStravaActivity(
   if (event.aspect_type !== 'create') return;
 
   const token = await getAccessToken(env);
-  const activity = await getActivity(event.object_id, token);
+
+  // Strava fires the webhook before GPS processing completes. Retry a few
+  // times with backoff to give the activity time to be fully populated.
+  let activity = await getActivity(event.object_id, token);
+  if (!activity.start_latlng || activity.start_latlng.length !== 2) {
+    const delays = [5000, 15000, 30000];
+    for (const delay of delays) {
+      await sleep(delay);
+      activity = await getActivity(event.object_id, token);
+      if (activity.start_latlng?.length === 2) break;
+    }
+  }
 
   if (!activity.start_latlng || activity.start_latlng.length !== 2) {
     console.log(`Activity ${activity.id} has no GPS — skipping`);
