@@ -1,0 +1,17 @@
+name = "strava-weather-enricher"
+main = "src/index.ts"
+compatibility_date = "2024-09-01"
+
+# Disable the default workers.dev URL — we use the custom domain only.
+workers_dev = false
+
+# Custom domain. Cloudflare auto-creates DNS + SSL on first deploy.
+# Prerequisites: gallagher.team is an active Cloudflare zone, and there is
+# no existing CNAME for strava.gallagher.team.
+routes = [
+  { pattern = "strava.gallagher.team", custom_domain = true }
+]
+
+[[kv_namespaces]]
+binding = "TOKENS"
+id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
