@@ -19,6 +19,7 @@ const PERFORMANCE_SPORT_TYPES = new Set(Object.keys(SPORT_HEADERS));
 const MARKER_FRAGMENTS = [...Object.values(SPORT_HEADERS), '🌤 Weather conditions', '🌤 Weather Report'];
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+const toMph = (kph: number) => (kph * 0.621371).toFixed(1);
 
 export async function handleStravaActivity(
   event: StravaWebhookEvent,
@@ -91,13 +92,13 @@ function formatWeatherBlock(
     : '';
 
   const gustStr = avg.windGusts > avg.windSpeed * 1.5
-    ? ` (gusts ${avg.windGusts.toFixed(0)} km/h)`
+    ? ` (gusts ${toMph(avg.windGusts)} mph)`
     : '';
 
   const lines: string[] = [
     header,
     `${avg.temperature.toFixed(1)}°C (feels ${avg.apparentTemperature.toFixed(1)}°C${deltaStr}) · Humidity ${avg.humidity.toFixed(0)}% · Dew ${avg.dewPoint.toFixed(1)}°C`,
-    `Wind ${avg.windSpeed.toFixed(1)} km/h ${degreesToCompass(avg.windDirection)}${gustStr} · ${weatherCodeDescription(avg.weatherCode)} · Cloud ${avg.cloudCover.toFixed(0)}%${precipStr}`,
+    `Wind ${toMph(avg.windSpeed)} mph ${degreesToCompass(avg.windDirection)}${gustStr} · ${weatherCodeDescription(avg.weatherCode)} · Cloud ${avg.cloudCover.toFixed(0)}%${precipStr}`,
   ];
 
   if (showPerformance) {
