@@ -105,10 +105,11 @@ npm run deploy   # deploy to Cloudflare
 
 ## GitHub Actions
 
-Auto-deploy on push to `main` requires two repository secrets:
+Auto-deploy on push to `main` requires three repository secrets:
 
 - `CLOUDFLARE_API_TOKEN` — from https://dash.cloudflare.com/profile/api-tokens (Edit Cloudflare Workers template)
 - `CLOUDFLARE_ACCOUNT_ID` — visible in the Cloudflare dashboard sidebar
+- `STRAVA_ATHLETE_ID` — same value as the Worker secret above
 
 ## Privacy
 
