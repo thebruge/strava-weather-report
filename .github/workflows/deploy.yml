@@ -9,6 +9,9 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    environment:
+      name: production
+      url: https://strava.gallagher.team/webhook
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
