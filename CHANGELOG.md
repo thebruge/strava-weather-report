@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-05-12
+
+### Added
+- Sport-aware headers: `🏃 Run Report`, `🏔️ Trail Report`, `🚴 Ride Report`, `🚵 Ride Report`
+- Performance impact line for runs, trail runs, and rides — rule-based assessment using dew point, temperature, wind, and rain
+- Attribution footer: `Powered by Open-Meteo · github.com/thebruge/strava-weather-report`
+- Polyline fallback: decodes start coordinates from encoded polyline when `start_latlng` is empty
+
+### Changed
+- Compact 2-line weather format (down from 5 lines)
+- Idempotency check now covers all sport-aware header variants and legacy marker
+
 ## [1.2.0] - 2026-05-12
 
 ### Changed

@@ -2,7 +2,21 @@ import type { Env, StravaWebhookEvent } from './index';
 import { getAccessToken, getActivity, updateActivityDescription, resolveStartLatLng } from './strava';
 import { getWeatherForActivity, type WeatherSnapshot } from './weather';
 
-const MARKER = '🌤 Weather conditions';
+const SPORT_HEADERS: Record<string, string> = {
+  Run: '🏃 Run Report',
+  TrailRun: '🏔️ Trail Report',
+  Ride: '🚴 Ride Report',
+  GravelRide: '🚵 Ride Report',
+  MountainBikeRide: '🚵 Ride Report',
+  VirtualRide: '🚴 Ride Report',
+  Velomobile: '🚴 Ride Report',
+  Handcycle: '🚴 Ride Report',
+};
+
+const PERFORMANCE_SPORT_TYPES = new Set(Object.keys(SPORT_HEADERS));
+
+// Covers both new sport-aware headers and the legacy marker
+const MARKER_FRAGMENTS = [...Object.values(SPORT_HEADERS), '🌤 Weather conditions', '🌤 Weather Report'];
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -34,7 +48,7 @@ export async function handleStravaActivity(
     return;
   }
 
-  if (activity.description?.includes(MARKER)) {
+  if (MARKER_FRAGMENTS.some((m) => activity.description?.includes(m))) {
     console.log(`Activity ${activity.id} already enriched — skipping`);
     return;
   }
@@ -49,7 +63,9 @@ export async function handleStravaActivity(
     return;
   }
 
-  const block = formatWeatherBlock(weather.avg, weather.start, weather.end);
+  const header = SPORT_HEADERS[activity.sport_type] ?? '🌤 Weather Report';
+  const showPerformance = PERFORMANCE_SPORT_TYPES.has(activity.sport_type);
+  const block = formatWeatherBlock(weather.avg, weather.start, weather.end, header, showPerformance);
   const newDescription = activity.description?.trim()
     ? `${block}\n\n${activity.description}`
     : block;
@@ -61,30 +77,79 @@ export async function handleStravaActivity(
 function formatWeatherBlock(
   avg: WeatherSnapshot,
   start: WeatherSnapshot,
-  end: WeatherSnapshot
+  end: WeatherSnapshot,
+  header: string,
+  showPerformance: boolean
 ): string {
   const tempDelta = end.temperature - start.temperature;
-  const deltaStr =
-    Math.abs(tempDelta) >= 0.5
-      ? ` (${tempDelta > 0 ? '+' : ''}${tempDelta.toFixed(1)}°C over the run)`
-      : '';
+  const deltaStr = Math.abs(tempDelta) >= 0.5
+    ? `, ${tempDelta > 0 ? '+' : ''}${tempDelta.toFixed(1)}° over run`
+    : '';
+
+  const precipStr = avg.precipitation > 0.1
+    ? ` · ${avg.precipitation.toFixed(1)}mm precip`
+    : '';
+
+  const gustStr = avg.windGusts > avg.windSpeed * 1.5
+    ? ` (gusts ${avg.windGusts.toFixed(0)} km/h)`
+    : '';
 
   const lines: string[] = [
-    MARKER,
-    `Temp: ${avg.temperature.toFixed(1)}°C, felt like ${avg.apparentTemperature.toFixed(1)}°C${deltaStr}`,
-    `Humidity: ${avg.humidity.toFixed(0)}% · Dew point: ${avg.dewPoint.toFixed(1)}°C`,
-    `Wind: ${avg.windSpeed.toFixed(1)} km/h ${degreesToCompass(avg.windDirection)}` +
-      (avg.windGusts > avg.windSpeed * 1.5
-        ? ` (gusts ${avg.windGusts.toFixed(0)} km/h)`
-        : ''),
+    header,
+    `${avg.temperature.toFixed(1)}°C (feels ${avg.apparentTemperature.toFixed(1)}°C${deltaStr}) · Humidity ${avg.humidity.toFixed(0)}% · Dew ${avg.dewPoint.toFixed(1)}°C`,
+    `Wind ${avg.windSpeed.toFixed(1)} km/h ${degreesToCompass(avg.windDirection)}${gustStr} · ${weatherCodeDescription(avg.weatherCode)} · Cloud ${avg.cloudCover.toFixed(0)}%${precipStr}`,
   ];
 
-  if (avg.precipitation > 0.1) {
-    lines.push(`Precipitation: ${avg.precipitation.toFixed(1)} mm total`);
+  if (showPerformance) {
+    lines.push('');
+    lines.push(performanceImpact(avg));
   }
 
-  lines.push(`Conditions: ${weatherCodeDescription(avg.weatherCode)} · Cloud ${avg.cloudCover.toFixed(0)}%`);
+  lines.push('');
+  lines.push('Powered by Open-Meteo · github.com/thebruge/strava-weather-report');
+
   return lines.join('\n');
+}
+
+function performanceImpact(w: WeatherSnapshot): string {
+  const dew = w.dewPoint;
+  const temp = w.temperature;
+  const wind = w.windSpeed;
+  const rain = w.precipitation > 0.1;
+
+  // Dew point is the best indicator of heat stress
+  if (dew >= 21 || temp >= 28) {
+    return '⚡ Tough. Heat and humidity add significant effort — expect 5–8% slower pace.';
+  }
+  if (dew >= 18 || temp >= 24) {
+    return '⚡ Hard work. Warm and humid — pace will feel harder than the numbers suggest.';
+  }
+  if (temp <= 0) {
+    return '⚡ Freezing conditions. Icy risk, reduced muscle efficiency — take it steady.';
+  }
+  if (wind >= 35) {
+    return rain
+      ? '⚡ Brutal. Heavy wind and rain — just finishing is a win.'
+      : '⚡ Tough. Severe wind adds major resistance — expect 6–10% effort penalty.';
+  }
+  if (wind >= 20) {
+    return rain
+      ? '⚡ Wet and windy. Grip and drag affected — factor in 4–6% effort penalty.'
+      : '⚡ Challenging. Strong wind adds meaningful resistance — factor in 3–5% effort penalty.';
+  }
+  if (rain) {
+    return '⚡ Wet but manageable. Rain affects grip — mentally tough.';
+  }
+  if (temp >= 8 && temp <= 14 && dew < 12 && wind < 15) {
+    return '⚡ Near-ideal. Cool, dry, light wind — classic fast conditions. 🏆';
+  }
+  if (temp >= 5 && temp <= 18 && dew < 15 && wind < 20) {
+    return '⚡ Good conditions. Solid day for a strong effort.';
+  }
+  if (temp < 5) {
+    return '⚡ Cold but manageable. Layer up and allow extra warm-up time.';
+  }
+  return '⚡ Decent conditions. Nothing to hold you back.';
 }
 
 function degreesToCompass(deg: number): string {

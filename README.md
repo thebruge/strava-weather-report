@@ -4,14 +4,27 @@ A Cloudflare Worker that automatically enriches your Strava activities with weat
 
 ## Example output
 
+**Run / Trail Run / Ride** (with performance impact):
 ```
-🌤 Weather conditions
-Temp: 18.2°C, felt like 17.1°C (+1.3°C over the run)
-Humidity: 72% · Dew point: 13.1°C
-Wind: 12.4 km/h SSW (gusts 21 km/h)
-Precipitation: 0.4 mm total
-Conditions: Partly cloudy · Cloud 45%
+🏃 Run Report
+12.1°C (feels 11.0°C) · Humidity 55% · Dew 3.2°C
+Wind 8.5 km/h NNW · Mainly clear · Cloud 20%
+
+⚡ Near-ideal. Cool, dry, light wind — classic fast conditions. 🏆
+
+Powered by Open-Meteo · github.com/thebruge/strava-weather-report
 ```
+
+**Other GPS activities** (weather only):
+```
+🌤 Weather Report
+28.4°C (feels 31.2°C, +2.1° over run) · Humidity 82% · Dew 24.8°C
+Wind 6.0 km/h S · Partly cloudy · Cloud 45% · 3.2mm precip
+
+Powered by Open-Meteo · github.com/thebruge/strava-weather-report
+```
+
+Sport-aware headers: `🏃 Run Report`, `🏔️ Trail Report`, `🚴 Ride Report`, `🚵 Ride Report`.
 
 ## Architecture
 
@@ -23,7 +36,7 @@ See [docs/architecture.md](docs/architecture.md) for a full walkthrough.
 |---|---|---|
 | Runtime | Cloudflare Workers | Free tier, globally distributed, no cold starts |
 | Token storage | Workers KV | Persistent key/value for OAuth token rotation |
-| Weather data | Open-Meteo | Free, no API key, `past_days=7` covers recent activities |
+| Weather data | Open-Meteo | Free, no API key, `start_date`/`end_date` for precise queries |
 | Language | TypeScript | Type safety for Strava + Open-Meteo API shapes |
 | Deploy | GitHub Actions + Wrangler | Auto-deploy on push to `main` |
 
