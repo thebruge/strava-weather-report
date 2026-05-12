@@ -54,7 +54,6 @@ export async function getWeatherForActivity(
       'wind_speed_10m', 'wind_gusts_10m', 'wind_direction_10m', 'weather_code',
     ].join(','),
     timezone: 'UTC',
-    past_days: '7',
     wind_speed_unit: 'kmh',
     temperature_unit: 'celsius',
     precipitation_unit: 'mm',
@@ -62,7 +61,7 @@ export async function getWeatherForActivity(
 
   const res = await fetch(`https://api.open-meteo.com/v1/forecast?${params}`);
   if (!res.ok) {
-    console.error(`Open-Meteo failed: ${res.status}`);
+    console.error(`Open-Meteo failed: ${res.status} ${await res.text()}`);
     return null;
   }
 
