@@ -14,4 +14,4 @@ routes = [
 
 [[kv_namespaces]]
 binding = "TOKENS"
-id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
+id = "aaecabac12be4678b5e0856d3c854eeb"
