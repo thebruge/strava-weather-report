@@ -1,5 +1,5 @@
 import type { Env, StravaWebhookEvent } from './index';
-import { getAccessToken, getActivity, updateActivityDescription } from './strava';
+import { getAccessToken, getActivity, updateActivityDescription, resolveStartLatLng } from './strava';
 import { getWeatherForActivity, type WeatherSnapshot } from './weather';
 
 const MARKER = '🌤 Weather conditions';
@@ -19,16 +19,17 @@ export async function handleStravaActivity(
   // times with backoff to give the activity time to be fully populated.
   // Delays are kept short to stay within the Workers free tier waitUntil limit.
   let activity = await getActivity(event.object_id, token);
-  if (!activity.start_latlng || activity.start_latlng.length !== 2) {
+  if (!resolveStartLatLng(activity)) {
     const delays = [3000, 7000];
     for (const delay of delays) {
       await sleep(delay);
       activity = await getActivity(event.object_id, token);
-      if (activity.start_latlng?.length === 2) break;
+      if (resolveStartLatLng(activity)) break;
     }
   }
 
-  if (!activity.start_latlng || activity.start_latlng.length !== 2) {
+  const startLatLng = resolveStartLatLng(activity);
+  if (!startLatLng) {
     console.log(`Activity ${activity.id} has no GPS — skipping`);
     return;
   }
@@ -38,7 +39,7 @@ export async function handleStravaActivity(
     return;
   }
 
-  const [lat, lon] = activity.start_latlng;
+  const [lat, lon] = startLatLng;
   const weather = await getWeatherForActivity(
     lat, lon, activity.start_date, activity.elapsed_time
   );

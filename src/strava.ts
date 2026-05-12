@@ -23,11 +23,48 @@ export interface StravaActivity {
   elapsed_time: number;
   moving_time: number;
   distance: number;
-  start_latlng: [number, number] | null;
-  end_latlng: [number, number] | null;
+  start_latlng: [number, number] | [] | null;
+  end_latlng: [number, number] | [] | null;
   timezone: string;
   type: string;
   sport_type: string;
+  map?: { polyline: string; summary_polyline: string };
+}
+
+export function resolveStartLatLng(
+  activity: StravaActivity
+): [number, number] | null {
+  if (activity.start_latlng?.length === 2) {
+    return activity.start_latlng as [number, number];
+  }
+  const polyline = activity.map?.polyline || activity.map?.summary_polyline;
+  if (polyline) {
+    return decodeFirstPoint(polyline);
+  }
+  return null;
+}
+
+function decodeFirstPoint(encoded: string): [number, number] | null {
+  let index = 0;
+  let lat = 0;
+  let lng = 0;
+
+  const decodeNext = (): number => {
+    let result = 0;
+    let shift = 0;
+    let byte: number;
+    do {
+      byte = encoded.charCodeAt(index++) - 63;
+      result |= (byte & 0x1f) << shift;
+      shift += 5;
+    } while (byte >= 0x20);
+    return result & 1 ? ~(result >> 1) : result >> 1;
+  };
+
+  if (!encoded || index >= encoded.length) return null;
+  lat += decodeNext();
+  lng += decodeNext();
+  return [lat / 1e5, lng / 1e5];
 }
 
 export async function getAccessToken(env: Env): Promise<string> {
