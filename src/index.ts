@@ -4,6 +4,7 @@ export interface Env {
   STRAVA_CLIENT_ID: string;
   STRAVA_CLIENT_SECRET: string;
   STRAVA_VERIFY_TOKEN: string;
+  STRAVA_ATHLETE_ID: string;
   TOKENS: KVNamespace;
 }
 
@@ -44,6 +45,10 @@ export default {
         event = await request.json<StravaWebhookEvent>();
       } catch {
         return new Response('Bad request', { status: 400 });
+      }
+
+      if (String(event.owner_id) !== env.STRAVA_ATHLETE_ID) {
+        return new Response('OK', { status: 200 });
       }
 
       ctx.waitUntil(
