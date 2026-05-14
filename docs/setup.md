@@ -130,6 +130,22 @@ Add three secrets to your GitHub repository (Settings → Secrets and variables 
 
 Pushes to `main` will now auto-deploy the Worker.
 
+## Step 9 — Axiom logging (optional)
+
+Axiom provides persistent, queryable logs for the Worker — useful for debugging enrichment failures without needing `wrangler tail` open.
+
+1. Create a free account at https://axiom.co
+2. Create a dataset (e.g. `strava-weather`)
+3. Create an API token with ingest permissions for that dataset
+4. Add the secrets to your Worker:
+
+```bash
+npx wrangler secret put AXIOM_TOKEN    # your Axiom API token
+npx wrangler secret put AXIOM_DATASET  # your dataset name, e.g. strava-weather
+```
+
+The Worker will now send structured log entries to Axiom for every enrichment, skip, and error. If these secrets are not set, logging falls back to `console.log` only (visible via `wrangler tail`).
+
 ## Verification
 
 Test the webhook handshake:

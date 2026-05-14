@@ -2,14 +2,16 @@
 
 ## Overview
 
-Strava Weather Enricher is a single Cloudflare Worker with four TypeScript modules. It has no database, no server, and no ongoing compute cost — it only runs when Strava fires a webhook.
+Strava Weather Enricher is a single Cloudflare Worker with five TypeScript modules. It has no database, no server, and no ongoing compute cost — it only runs when Strava fires a webhook.
 
 ```
 Strava ──webhook──▶ Worker ──▶ Strava API (read activity)
                        │
                        ├──▶ Open-Meteo API (fetch weather)
                        │
-                       └──▶ Strava API (write description)
+                       ├──▶ Strava API (write description)
+                       │
+                       └──▶ Axiom (structured logs)
 
 Workers KV ◀──▶ Worker  (OAuth token storage)
 ```
@@ -25,6 +27,7 @@ Workers KV ◀──▶ Worker  (OAuth token storage)
 7. Open-Meteo is queried for hourly weather data spanning the activity's start and end dates.
 8. Three snapshots are computed: start, end, and average across the activity window.
 9. A formatted weather block is prepended to the activity description and PUT back to Strava.
+10. A structured log entry is sent to Axiom with key weather fields for querying and alerting.
 
 ## Modules
 
@@ -58,6 +61,12 @@ All other paths return 404.
 - `degreesToCompass()` — Converts wind bearing to a 16-point compass label (N, NNE, NE, …).
 - `weatherCodeDescription()` — Maps WMO weather codes to human-readable strings.
 
+### `src/logger.ts` — Structured logging
+
+- `log(env, fields)` — Emits a structured JSON log entry to `console.log` and, if `AXIOM_TOKEN` and `AXIOM_DATASET` secrets are set, POSTs it to Axiom's ingest API. Logging failures are silently swallowed so they never affect enrichment.
+
+Key events logged: `Enriched` (with weather fields), `No GPS — skipping`, `Already enriched — skipping`, `No weather data`, `Enrichment failed`.
+
 ## Token rotation
 
 Strava access tokens expire every 6 hours. The Worker handles this transparently:
@@ -78,9 +87,10 @@ Before enriching, the Worker checks whether the description already contains any
 |---|---|
 | Worker | `strava-weather-enricher`, deployed to `strava.gallagher.team` |
 | KV Namespace | `TOKENS` — stores one key: `strava` |
-| Secrets | `STRAVA_CLIENT_ID`, `STRAVA_CLIENT_SECRET`, `STRAVA_VERIFY_TOKEN`, `STRAVA_ATHLETE_ID` |
+| Secrets | `STRAVA_CLIENT_ID`, `STRAVA_CLIENT_SECRET`, `STRAVA_VERIFY_TOKEN`, `STRAVA_ATHLETE_ID`, `AXIOM_TOKEN` (optional), `AXIOM_DATASET` (optional) |
 | Custom domain | `strava.gallagher.team` — Cloudflare manages DNS + TLS |
 | CI/CD | GitHub Actions → `wrangler deploy` on push to `main` |
+| Logging | Axiom — structured logs with weather fields, queryable via Axiom UI |
 
 ## Data flow diagram
 
@@ -109,8 +119,8 @@ Strava backend
                                             ▼
                                   Strava GET /activities/:id
                                             │
-                                   no GPS? ─┼──▶ exit
-                                  enriched? ─┼──▶ exit
+                                   no GPS? ─┼──▶ log + exit
+                                  enriched? ─┼──▶ log + exit
                                             │
                                             ▼
                                   Open-Meteo GET /forecast
@@ -120,4 +130,7 @@ Strava backend
                                             │
                                             ▼
                                   Strava PUT /activities/:id
+                                            │
+                                            ▼
+                                  Axiom ingest log entry
 ```
