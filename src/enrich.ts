@@ -1,6 +1,7 @@
 import type { Env, StravaWebhookEvent } from './index';
 import { getAccessToken, getActivity, updateActivityDescription, resolveStartLatLng } from './strava';
 import { getWeatherForActivity, type WeatherSnapshot } from './weather';
+import { log } from './logger';
 
 const SPORT_HEADERS: Record<string, string> = {
   Run: '🏃 Run Report',
@@ -45,12 +46,12 @@ export async function handleStravaActivity(
 
   const startLatLng = resolveStartLatLng(activity);
   if (!startLatLng) {
-    console.log(`Activity ${activity.id} has no GPS — skipping`);
+    await log(env, { level: 'info', message: 'No GPS — skipping', activity_id: activity.id, sport: activity.sport_type });
     return;
   }
 
   if (MARKER_FRAGMENTS.some((m) => activity.description?.includes(m))) {
-    console.log(`Activity ${activity.id} already enriched — skipping`);
+    await log(env, { level: 'info', message: 'Already enriched — skipping', activity_id: activity.id });
     return;
   }
 
@@ -60,7 +61,7 @@ export async function handleStravaActivity(
   );
 
   if (!weather) {
-    console.log(`No weather data for ${activity.id}`);
+    await log(env, { level: 'warn', message: 'No weather data', activity_id: activity.id, lat, lon });
     return;
   }
 
@@ -72,7 +73,17 @@ export async function handleStravaActivity(
     : block;
 
   await updateActivityDescription(activity.id, newDescription, token);
-  console.log(`Enriched activity ${activity.id}`);
+  await log(env, {
+    level: 'info',
+    message: 'Enriched',
+    activity_id: activity.id,
+    sport: activity.sport_type,
+    temp_c: weather.avg.temperature,
+    wind_mph: parseFloat(toMph(weather.avg.windSpeed)),
+    humidity: weather.avg.humidity,
+    dew_point_c: weather.avg.dewPoint,
+    weather_code: weather.avg.weatherCode,
+  });
 }
 
 function formatWeatherBlock(

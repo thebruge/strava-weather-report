@@ -1,4 +1,5 @@
 import { handleStravaActivity } from './enrich';
+import { log } from './logger';
 
 export interface Env {
   STRAVA_CLIENT_ID: string;
@@ -6,6 +7,8 @@ export interface Env {
   STRAVA_VERIFY_TOKEN: string;
   STRAVA_ATHLETE_ID: string;
   TOKENS: KVNamespace;
+  AXIOM_TOKEN?: string;
+  AXIOM_DATASET?: string;
 }
 
 export interface StravaWebhookEvent {
@@ -54,6 +57,7 @@ export default {
       ctx.waitUntil(
         handleStravaActivity(event, env).catch((err) => {
           console.error('Enrichment failed:', err);
+          log(env, { level: 'error', message: 'Enrichment failed', error: String(err), activity_id: event.object_id });
         })
       );
 
