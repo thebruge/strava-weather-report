@@ -123,45 +123,85 @@ function formatWeatherBlock(
   return lines.join('\n');
 }
 
+interface EffortTier {
+  label: string;
+  shortLabel: string;
+  low: number;
+  high: number;
+}
+
+// Dew-point breakpoints (55/65/70/75°F) and recreational-runner % ranges are
+// derived from Ely et al. 2007 (marathon performance vs. WBGT) and the
+// physiological consensus on dew point's effect on evaporative cooling.
+// Ordered most- to least-severe; the first match wins.
+const HEAT_TIERS: Array<EffortTier & { dew: number; temp: number }> = [
+  { dew: 24, temp: 32, label: 'Severe heat and humidity', shortLabel: 'severe heat', low: 12, high: 15 },
+  { dew: 21, temp: 28, label: 'Tough heat and humidity', shortLabel: 'tough heat', low: 9, high: 12 },
+  { dew: 18, temp: 24, label: 'Warm and humid conditions', shortLabel: 'heat', low: 6, high: 9 },
+  { dew: 13, temp: 20, label: 'Mild heat load', shortLabel: 'mild heat', low: 3, high: 6 },
+];
+
+// Wind penalty scales with the square of wind speed (Pugh 1971), so tiers
+// widen faster than they would under a linear model.
+const WIND_TIERS: Array<EffortTier & { speed: number }> = [
+  { speed: 40, label: 'Severe wind', shortLabel: 'wind', low: 10, high: 14 },
+  { speed: 25, label: 'Strong wind', shortLabel: 'wind', low: 5, high: 8 },
+  { speed: 15, label: 'Breezy conditions', shortLabel: 'wind', low: 2, high: 4 },
+];
+
+function heatTier(dew: number, temp: number): EffortTier | null {
+  return HEAT_TIERS.find((t) => dew >= t.dew || temp >= t.temp) ?? null;
+}
+
+function windTier(speed: number): EffortTier | null {
+  return WIND_TIERS.find((t) => speed >= t.speed) ?? null;
+}
+
 function performanceImpact(w: WeatherSnapshot): string {
   const dew = w.dewPoint;
   const temp = w.temperature;
-  const wind = w.windSpeed;
   const rain = w.precipitation > 0.1;
+  const rainSuffix = rain ? ', wet underfoot' : '';
 
-  // Dew point is the best indicator of heat stress
-  if (dew >= 21 || temp >= 28) {
-    return '⚡ Tough. Heat and humidity add significant effort — expect 5–8% slower pace.';
+  const heat = heatTier(dew, temp);
+  const wind = windTier(w.windSpeed);
+
+  if (heat) {
+    if (wind) {
+      const low = heat.low + wind.low;
+      const high = heat.high + wind.high;
+      return `⚡ ${capitalize(heat.shortLabel)} and wind compounding — expect roughly ${low}–${high}% off pace${rainSuffix}.`;
+    }
+    return `⚡ ${heat.label} — typically ${heat.low}–${heat.high}% off pace${rainSuffix}.`;
   }
-  if (dew >= 18 || temp >= 24) {
-    return '⚡ Hard work. Warm and humid — pace will feel harder than the numbers suggest.';
+
+  if (temp <= -5) {
+    return `⚡ Hazardous cold — icy/frostbite-risk conditions${rain ? ', wet on top of the cold' : ''}.`;
   }
   if (temp <= 0) {
-    return '⚡ Freezing conditions. Icy risk, reduced muscle efficiency — take it steady.';
+    return '⚡ Freezing — icy underfoot risk and reduced muscle efficiency.';
   }
-  if (wind >= 35) {
-    return rain
-      ? '⚡ Brutal. Heavy wind and rain — just finishing is a win.'
-      : '⚡ Tough. Severe wind adds major resistance — expect 6–10% effort penalty.';
-  }
-  if (wind >= 20) {
-    return rain
-      ? '⚡ Wet and windy. Grip and drag affected — factor in 4–6% effort penalty.'
-      : '⚡ Challenging. Strong wind adds meaningful resistance — factor in 3–5% effort penalty.';
+
+  if (wind) {
+    return `⚡ ${wind.label} — typically ${wind.low}–${wind.high}% off pace${rainSuffix}.`;
   }
   if (rain) {
     return '⚡ Wet but manageable. Rain affects grip — mentally tough.';
   }
-  if (temp >= 8 && temp <= 14 && dew < 12 && wind < 15) {
+  if (temp >= 8 && temp <= 14 && dew < 12) {
     return '⚡ Near-ideal. Cool, dry, light wind — classic fast conditions. 🏆';
   }
-  if (temp >= 5 && temp <= 18 && dew < 15 && wind < 20) {
+  if (temp >= 5 && temp <= 18 && dew < 15) {
     return '⚡ Good conditions. Solid day for a strong effort.';
   }
   if (temp < 5) {
     return '⚡ Cold but manageable. Layer up and allow extra warm-up time.';
   }
   return '⚡ Decent conditions. Nothing to hold you back.';
+}
+
+function capitalize(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
 function degreesToCompass(deg: number): string {

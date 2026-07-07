@@ -15,6 +15,15 @@ Wind 5.3 mph NNW · Mainly clear · Cloud 20%
 Powered by Open-Meteo · github.com/thebruge/strava-weather-report
 ```
 
+Performance impact scales across heat, humidity, and wind tiers instead of one fixed message — e.g. a hotter/more humid run reads:
+```
+⚡ Tough heat and humidity — typically 9–12% off pace.
+```
+Hot and windy conditions compound into a single combined estimate:
+```
+⚡ Severe heat and wind compounding — expect roughly 17–23% off pace.
+```
+
 **Other GPS activities** (weather only):
 ```
 🌤 Weather Report

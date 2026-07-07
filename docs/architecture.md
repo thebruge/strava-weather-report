@@ -57,7 +57,7 @@ All other paths return 404.
 
 - `handleStravaActivity(event, env)` — Top-level handler. Guards for non-activity events, no-GPS activities, and already-enriched activities. Retries GPS fetch up to twice (3s, 7s) to handle the race condition where Strava fires the webhook before GPS processing completes.
 - `formatWeatherBlock()` — Builds the compact 2-line weather block with sport-aware header, optional performance impact line, and attribution footer. Shows temp delta if ≥0.5°C change, gusts only if >1.5× mean wind speed, precipitation only if >0.1mm.
-- `performanceImpact()` — Rule-based assessment for runs, trail runs, and rides. Uses dew point as the primary heat stress indicator, then wind and rain. Only shown for performance sport types.
+- `performanceImpact()` — Tiered assessment for runs, trail runs, and rides. Only shown for performance sport types. Heat/humidity uses dew point (temperature as fallback) across 4 tiers with % pace-impact ranges grounded in Ely et al. 2007 (marathon performance vs. WBGT); wind uses 3 tiers scaled roughly by wind² per Pugh 1971. When both heat and wind tiers fire, their ranges combine into one estimate. Cold (≤0°C, ≤-5°C) and rain are handled as separate risk/qualifier modifiers rather than % ranges.
 - `degreesToCompass()` — Converts wind bearing to a 16-point compass label (N, NNE, NE, …).
 - `weatherCodeDescription()` — Maps WMO weather codes to human-readable strings.
 

@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-07-07
+
+### Changed
+- Performance impact guidance is now tiered instead of two flat heat buckets — 4 heat/humidity tiers and 3 wind tiers, each with its own % pace-impact range, so a 28°C run and a 34°C run no longer read identically
+- Heat and wind penalties now compound into a single combined range when both are significant (e.g. hot + windy), instead of only one factor being reported
+- Thresholds and % ranges are grounded in published research: dew-point breakpoints and recreational-runner slowdown from Ely et al. 2007 (marathon performance vs. WBGT), wind penalty scaling from Pugh 1971 (energy cost ∝ wind²)
+- Added a "hazardous cold" tier (≤ -5°C) below the existing freezing tier
+- Wording reframed as retrospective ("typically costs X% off pace") rather than pre-workout advice, since the block is written after the activity completes
+
 ## [1.4.0] - 2026-05-14
 
 ### Added
