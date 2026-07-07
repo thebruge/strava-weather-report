@@ -110,6 +110,7 @@ curl -X POST https://www.strava.com/api/v3/push_subscriptions \
 npm run dev      # local dev server via wrangler
 npm run tail     # stream live logs from the deployed Worker
 npm run deploy   # deploy to Cloudflare
+npm test         # run the unit test suite (performance impact tiers)
 ```
 
 ## GitHub Actions

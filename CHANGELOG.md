@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.1] - 2026-07-07
+
+### Added
+- Vitest unit test suite covering `performanceImpact()` and its `heatTier()`/`windTier()` helpers — 24 cases across every tier boundary, the heat+wind compounding path, rain qualifiers, and the near-ideal/good/decent fallbacks
+- CI now runs `npm test` before `wrangler deploy`, so a broken tier calculation blocks deployment instead of shipping silently
+
 ## [1.5.0] - 2026-07-07
 
 ### Changed

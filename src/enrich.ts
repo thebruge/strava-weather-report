@@ -149,15 +149,15 @@ const WIND_TIERS: Array<EffortTier & { speed: number }> = [
   { speed: 15, label: 'Breezy conditions', shortLabel: 'wind', low: 2, high: 4 },
 ];
 
-function heatTier(dew: number, temp: number): EffortTier | null {
+export function heatTier(dew: number, temp: number): EffortTier | null {
   return HEAT_TIERS.find((t) => dew >= t.dew || temp >= t.temp) ?? null;
 }
 
-function windTier(speed: number): EffortTier | null {
+export function windTier(speed: number): EffortTier | null {
   return WIND_TIERS.find((t) => speed >= t.speed) ?? null;
 }
 
-function performanceImpact(w: WeatherSnapshot): string {
+export function performanceImpact(w: WeatherSnapshot): string {
   const dew = w.dewPoint;
   const temp = w.temperature;
   const rain = w.precipitation > 0.1;
