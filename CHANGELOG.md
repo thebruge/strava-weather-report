@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- `CLAUDE.md` is committed (it was kept local and gitignored), with the module
+  map, constraints, testing, deploy and release steps.
+- Release tags `v1.0.0` to `v1.5.1` on the commits that shipped each version.
+
 ## [1.5.1] - 2026-07-07
 
 ### Added
@@ -75,3 +82,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Strava webhook verification handshake (GET /webhook)
 - GitHub Actions workflow for auto-deploy on push to `main`
 - Custom domain support (`strava.gallagher.team`)
+
+[Unreleased]: https://github.com/thebruge/strava-weather-report/compare/v1.5.1...HEAD
+[1.5.1]: https://github.com/thebruge/strava-weather-report/compare/v1.5.0...v1.5.1
+[1.5.0]: https://github.com/thebruge/strava-weather-report/compare/v1.4.0...v1.5.0
+[1.4.0]: https://github.com/thebruge/strava-weather-report/compare/v1.3.2...v1.4.0
+[1.3.2]: https://github.com/thebruge/strava-weather-report/compare/v1.3.1...v1.3.2
+[1.3.1]: https://github.com/thebruge/strava-weather-report/compare/v1.3.0...v1.3.1
+[1.3.0]: https://github.com/thebruge/strava-weather-report/compare/v1.2.0...v1.3.0
+[1.2.0]: https://github.com/thebruge/strava-weather-report/compare/v1.1.0...v1.2.0
+[1.1.0]: https://github.com/thebruge/strava-weather-report/compare/v1.0.0...v1.1.0
+[1.0.0]: https://github.com/thebruge/strava-weather-report/releases/tag/v1.0.0
