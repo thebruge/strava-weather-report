@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- MIT license file.
 - `CLAUDE.md` is committed (it was kept local and gitignored), with the module
   map, constraints, testing, deploy and release steps.
 - Release tags `v1.0.0` to `v1.5.1` on the commits that shipped each version.

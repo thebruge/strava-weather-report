@@ -137,4 +137,4 @@ This Worker only reads and writes your own Strava activities. No data is sent an
 
 ## License
 
-MIT
+[MIT](LICENSE)
